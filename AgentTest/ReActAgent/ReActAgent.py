@@ -1,6 +1,6 @@
 import re
 
-from tools import ToolExecutor, search
+from AgentTest.tools import ToolExecutor, search
 from llm_client.llm_client import BriskAgentsLLM
 
 # 提示词模板
@@ -146,4 +146,33 @@ if __name__ == '__main__':
 验证工具的输入与输出：检查智能体生成的 tool_input 是否是工具函数所期望的格式，同时也要确保工具返回的 observation 格式是智能体可以理解和处理的。
 调整提示词中的示例 (Few-shot Prompting)：如果模型频繁出错，可以在提示词中加入一两个完整的“Thought-Action-Observation”成功案例，通过示例来引导模型更好地遵循你的指令。
 尝试不同的模型或参数：更换一个能力更强的模型，或者调整 temperature 参数（通常设为0以保证输出的确定性），有时能直接解决问题。
+"""
+
+
+
+
+"""
+工具search注册成功
+-----第1步------
+大模型正在思考...
+Resp获取成功
+Action:search[Apple最新款电脑芯片型号]
+Action:search[Apple最新款电脑芯片型号]
+🎬 行动: search[Apple最新款电脑芯片型号]
+正在执行网页搜索 Apple最新款电脑芯片型号
+观察: [1] Apple 发布搭载M5 芯片的全新14 英寸MacBook Pro
+搭载M5 芯片的14 英寸MacBook Pro 速度更快更强大，AI 性能亦实现巨大飞跃。M5 芯片采用新一代图形处理器，每颗核心内皆配备神经网络加速器，与前代机型相比 ...
+
+[2] 识别MacBook Pro 机型- 官方Apple 支持(中国)
+这款机型搭载M4 Pro 或M4 Max 芯片，并配备三个雷雳5 端口。 颜色：银色、深空黑色. 机型标识符：Mac16,6、Mac16,8. 最新的兼容操作系统：macOS Tahoe 26.
+
+[3] MacBook Pro
+MacBook Pro 系列笔记本电脑现搭载M5、M4 Pro 或M4 Max 芯片，为AI 和Apple 智能预备好。最长达24 小时电池续航。Liquid 视网膜XDR 显示屏。
+-----第2步------
+大模型正在思考...
+Resp获取成功
+Action: Finish[Apple最新款电脑芯片的型号是M5。同时，M4 Pro和M4 Max也是Apple近期推出的高性能芯片。]
+Action: Finish[Apple最新款电脑芯片的型号是M5。同时，M4 Pro和M4 Max也是Apple近期推出的高性能芯片。]
+Finish[Apple最新款电脑芯片的型号是M5。同时，M4 Pro和M4 Max也是Apple近期推出的高性能芯片。] Apple最新款电脑芯片的型号是M5。同时，M4 Pro和M4 Max也是Apple近期推出的高性能芯片。
+🎉 最终答案: Apple最新款电脑芯片的型号是M5。同时，M4 Pro和M4 Max也是Apple近期推出的高性能芯片。
 """
