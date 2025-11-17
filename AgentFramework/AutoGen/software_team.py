@@ -4,6 +4,7 @@ AutoGen 软件开发团队协作案例
 
 import os
 import asyncio
+import random
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 
@@ -25,11 +26,21 @@ def create_openai_model_client():
     创建 OpenAI 模型客户端用于测试
     """
     print("=============================")
+    # 从环境变量读取配置，确保类型为 str 并在缺失时给出明确提示
+    model_id = os.getenv("LLM_MODEL_ID") or ""
+    api_key = os.getenv("LLM_API_KEY") or ""
+    base_url = os.getenv("LLM_BASE_URL") or ""
+
+    if not (model_id and api_key and base_url):
+        # 不直接抛出异常以便更友好地在控制台看到提示
+        print("WARNING: One or more LLM environment variables are missing:")
+        print(f"  LLM_MODEL_ID={bool(model_id)} LLM_API_KEY={bool(api_key)} LLM_BASE_URL={bool(base_url)}")
+        print("Please set LLM_MODEL_ID, LLM_API_KEY and LLM_BASE_URL in your environment or .env file.")
 
     return OpenAIChatCompletionClient(
-        model=os.getenv("LLM_MODEL_ID"),
-        api_key=os.getenv("LLM_API_KEY"),
-        base_url=os.getenv("LLM_BASE_URL"),
+        model=model_id,
+        api_key=api_key,
+        base_url=base_url,
     )
 
 def create_product_manager(model_client):
@@ -169,14 +180,40 @@ async def run_software_team():
 
 请团队协作完成这个任务，从需求分析到最终实现。"""
 
-    #执行
+    #执行（使用重试策略应对模型 503 / overloaded 错误）
     print("启动 AutoGen 软件开发团队协作")
     print("=" * 60)
 
-    # 显示对话过程
-    result = await Console(team_chat.run_stream(task=task))
+    async def _run_once():
+        # 单次运行协作会话并返回结果
+        return await Console(team_chat.run_stream(task=task))
 
-    print("\n"+"=" * 60)
+    async def _run_with_retries(coro_factory, max_retries: int = 5, base_delay: float = 1.0):
+        """对特定的模型过载错误进行指数退避重试。
+
+        只对明显的模型繁忙/503/UNAVAILABLE 错误做重试，其他错误会立即抛出。
+        """
+        for attempt in range(1, max_retries + 1):
+            try:
+                return await coro_factory()
+            except Exception as e:
+                msg = str(e).lower()
+                # 针对 503 / overloaded / unavailable 做重试
+                if ("503" in msg) or ("overloaded" in msg) or ("unavailable" in msg):
+                    if attempt == max_retries:
+                        print(f"重试次数用尽，最后错误：{e}")
+                        raise
+                    delay = base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
+                    print(f"模型繁忙，重试 {attempt}/{max_retries}，等待 {delay:.1f}s...  错误: {e}")
+                    await asyncio.sleep(delay)
+                    continue
+                # 非模型繁忙相关错误，直接抛出
+                raise
+
+    # 使用带重试的运行器执行团队协作
+    result = await _run_with_retries(_run_once, max_retries=5, base_delay=1.0)
+
+    print("\n" + "=" * 60)
     print("协作完成")
 
     return result
